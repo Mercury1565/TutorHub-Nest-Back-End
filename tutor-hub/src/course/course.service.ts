@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateCourseDto } from './dto/create-course.dto';
@@ -32,7 +36,7 @@ export class CourseService {
       subject,
       durationPerDay,
       seatsRemaining,
-      image
+      image,
     } = createCourseDto;
     const tutor = await this.userRepo.findOneBy({ id: tutorId });
     if (!tutor) {
@@ -46,23 +50,28 @@ export class CourseService {
       throw new Error('Course already exists');
     }
 
+    const { firstName } = await this.userRepo.findOneBy({
+      id: tutorId,
+    });
+
     const createdCourse = this.courseRepo.create({
       title,
       description,
       tutorId,
+      tutorName: firstName,
       grade,
       fee,
       subject,
       durationPerDay,
       seatsRemaining,
-      image
+      image,
     });
 
     return await this.courseRepo.save(createdCourse);
   }
 
   async findAll(tutorId: string) {
-    const courses = await this.courseRepo.findBy({tutorId});
+    const courses = await this.courseRepo.findBy({ tutorId });
     if (!courses) {
       throw new Error('No courses found');
     }
@@ -72,44 +81,44 @@ export class CourseService {
   async filterCourses(filterCourseDto: FilterCourseDto) {
     const { tutorId, grade, evaluation, durationPerDay, rate, title, subject } =
       filterCourseDto;
-  
+
     const queryBuilder = this.courseRepo.createQueryBuilder('course');
-  
+
     if (tutorId) {
       queryBuilder.andWhere('course.tutorId = :tutorId', { tutorId });
     }
     if (subject) {
       queryBuilder.andWhere('course.subject ILIKE :subject', {
-        subject: `%${subject}%`, 
+        subject: `%${subject}%`,
       });
     }
     if (title) {
       queryBuilder.andWhere('course.title ILIKE :title', {
-        title: `%${title}%`, 
+        title: `%${title}%`,
       });
     }
-  
+
     if (grade) {
       queryBuilder.andWhere('course.grade = :grade', { grade: +grade });
     }
-  
+
     if (evaluation !== undefined) {
       queryBuilder.andWhere('course.evaluation = :evaluation', { evaluation });
     }
-  
+
     if (durationPerDay !== undefined) {
       queryBuilder.andWhere('course.durationPerDay <= :durationPerDay', {
         durationPerDay,
       });
     }
-  
+
     if (rate !== undefined) {
       queryBuilder.andWhere('course.rate = :rate', { rate });
     }
-  
-    queryBuilder.orderBy('course.rate', 'DESC');  
+
+    queryBuilder.orderBy('course.rate', 'DESC');
     return await queryBuilder.getMany();
-  }  
+  }
 
   async findOne(id: string) {
     const foundCourse = await this.courseRepo.findOneBy({ id });
@@ -148,7 +157,7 @@ export class CourseService {
       throw new Error('No seats available');
     }
 
-   const student = await this.userRepo.findOne({
+    const student = await this.userRepo.findOne({
       where: { id: enrollCourseDto.studentId },
       relations: ['courses'],
     });

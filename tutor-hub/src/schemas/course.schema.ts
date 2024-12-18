@@ -16,6 +16,9 @@ export class Course {
   @Column({ type: 'uuid', nullable: false })
   tutorId: string;
 
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  tutorName: string;
+
   @ManyToMany(() => User, (user) => user.courses)
   students: User[];
 
@@ -43,6 +46,6 @@ export class Course {
   @Column({ type: 'decimal', nullable: true, default: 0 })
   rate: number;
 
-  @Column({ type: 'varchar', length: 255, nullable: true, default: '' })
+  @Column({ type: 'varchar', nullable: true, default: '' })
   image: string;
 }
