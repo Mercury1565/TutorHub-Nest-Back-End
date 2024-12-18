@@ -1,6 +1,13 @@
 // course.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToMany,
+  OneToMany,
+} from 'typeorm';
 import { User } from './user.schema';
+import { Assessment } from './assessment.schema';
 
 @Entity()
 export class Course {
@@ -37,15 +44,25 @@ export class Course {
   @Column({ type: 'int', nullable: false })
   seatsRemaining: number;
 
-  @Column({ type: 'jsonb', nullable: true, default: {} })
-  resources: {
-    video?: { title: string; url: string }[];
-    book?: { title: string; url: string }[];
-  };
-
   @Column({ type: 'decimal', nullable: true, default: 0 })
   rate: number;
 
   @Column({ type: 'varchar', nullable: true, default: '' })
   image: string;
+
+  @Column({
+    type: 'jsonb',
+    nullable: true,
+    default: { video: [], book: [], sampleExam: [] },
+  })
+  resources: {
+    video?: { title: string; url: string }[];
+    book?: { title: string; url: string }[];
+    sampleExam?: { title: string; url: string }[];
+  };
+
+  @OneToMany(() => Assessment, (assessment) => assessment.course, {
+    cascade: true,
+  })
+  assessments: Assessment[];
 }

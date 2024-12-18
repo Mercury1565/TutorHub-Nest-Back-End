@@ -6,7 +6,6 @@ import {
   Patch,
   Param,
   Delete,
-  Request,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -53,6 +52,12 @@ export class CourseController {
   findOne(@Param('id') id: string) {
     return this.courseService.findOne(id);
   }
+
+  @Get(':id/resources')
+  getResources(@Param('id') id: string) {
+    return this.courseService.getResources(id);
+  }
+
   @Post(':id/resources')
   addResource(
     @Param('id') id: string,

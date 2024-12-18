@@ -1,108 +1,76 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { google } from 'googleapis';
-import { ExamDto, ExamResultDto } from './dto/exam.dto';
-import { Exam } from 'src/schemas/exam.schema';
 import { ExamResult } from 'src/schemas/examResut.schema';
 import { User } from 'src/schemas/user.schema';
+import { Assessment } from 'src/schemas/assessment.schema';
+import { CreateAssessmentDto, ExamResultDto } from './dto/exam.dto';
+import { Course } from 'src/schemas/course.schema';
 
 @Injectable()
 export class ExamService {
   private calendar;
   constructor(
-    @InjectRepository(Exam) 
-    private readonly examRepository: Repository<Exam>,
-    @InjectRepository(User) 
+    @InjectRepository(Assessment)
+    private readonly assessmentRepository: Repository<Assessment>,
+    @InjectRepository(User)
     private readonly userRepo: Repository<User>,
-    @InjectRepository(ExamResult) 
+    @InjectRepository(ExamResult)
     private readonly examResultRepository: Repository<ExamResult>,
-  ) {
-    const auth = new google.auth.GoogleAuth({
-      keyFile: 'src/service.json',
-      scopes: ['https://www.googleapis.com/auth/calendar'],
+    @InjectRepository(Course)
+    private readonly courseRepository: Repository<Course>,
+  ) {}
+
+  async create(createAssessmentDto: CreateAssessmentDto) {
+    const { courseId, ...assessmentData } = createAssessmentDto;
+
+    const course = await this.courseRepository.findOneBy({ id: courseId });
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
+    }
+
+    const newAssessment = this.assessmentRepository.create({
+      ...assessmentData,
+      course,
     });
-    this.calendar = google.calendar({ version: 'v3', auth });
+
+    return this.assessmentRepository.save(newAssessment);
   }
 
-  async addEvent(
-    email: string,
-    examDate: Date,
-    examLink: string,
-  ): Promise<void> {
-    const event = {
-      summary: 'Exam',
-      description: `Your exam is scheduled. Please complete it using this link: ${examLink}`,
-      start: {
-        dateTime: examDate,
-        timeZone: 'Africa/Addis_Ababa',
+  async getExams(courseId: string) {
+    return await this.assessmentRepository.find({
+      where: { 
+      type: 'exam',
+      course: { id: courseId },
       },
-      end: {
-        dateTime: examDate, // Set appropriate end time
-        timeZone: 'Africa/Addis_Ababa',
-      },
-      attendees: [{ email }],
-    };
+    });
+  };
 
-    await this.calendar.events.insert({
-      calendarId: 'primary',
-      requestBody: event,
+  async getAssignments(courseId: string) {
+    return await this.assessmentRepository.find({
+      where: { 
+      type: 'assignment',
+      course: { id: courseId },
+      },
     });
   }
 
-  async create(tutorId: string, examDto: ExamDto) {
-    const tutorFound = await this.userRepo.findOneBy({id: tutorId});
-    if (!tutorFound) {
-      throw new Error('User not found');
-    }
-
-    const exam = this.examRepository.create(examDto);
-    exam.tutorId = tutorId;
-
-    return await this.examRepository.save(exam);
-  }
-
-  async addStudentsToExam(tutorId: string, examId: string, students: string[]) {
-    const tutorFound = await this.userRepo.findOneBy({id: tutorId});
-    if (!tutorFound) {
-      throw new Error('User not found');
-    }
-
-    const examFound = await this.examRepository.findOneBy({id: examId});
-    if (!examFound) {
-      throw new Error('Exam not found');
-    }
-
-    if (!Array.isArray(students)) {
-      throw new TypeError('students must be an array');
-    }
-
-    examFound.students = [...examFound.students, ...students];
-    return await this.examRepository.save(examFound);
-  }
-
-  async getExams(tutorId: string) {
-    const tutorFound = await this.userRepo.findOneBy({id: tutorId});
-    if (!tutorFound) {
-      throw new Error('User not found');
-    }
-
-    return await this.examRepository.find({ where: { tutorId } });
-  }
-
-  async getStudentExams(studentId: string) {
-    return await this.examRepository.find({ where: { students: studentId } });
-  }
+  // async getStudentExams(studentId: string) {
+  //   return await this.assessmentRepository.find({ where: { students: studentId } });
+  // }
 
   async addResult(tutorId: string, examResultDto: ExamResultDto) {
-    const tutorFound = await this.userRepo.findOneBy({id: tutorId});
+    const tutorFound = await this.userRepo.findOneBy({ id: tutorId });
     if (!tutorFound) {
       throw new Error('User not found');
     }
 
-    const examFound = await this.examRepository.findOneBy({id: examResultDto.examId});
+    const examFound = await this.assessmentRepository.findOneBy({
+      id: examResultDto.examId,
+    });
     if (!examFound) {
-      throw new Error('Exam not found');
+      throw new Error('Assessment not found');
     }
 
     const examResult = this.examResultRepository.create({

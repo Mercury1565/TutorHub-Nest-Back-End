@@ -138,15 +138,27 @@ export class CourseService {
       throw new Error('Invalid resource item');
     }
     const resource = { title, url };
+
     if (type === 'video') {
       foundCourse.resources.video.push(resource);
     } else if (type === 'book') {
       foundCourse.resources.book.push(resource);
+    } else if (type === 'sample_exam') {
+      foundCourse.resources.sampleExam.push(resource);
     } else {
       throw new Error('Invalid resource type');
     }
     return await this.courseRepo.save(foundCourse);
   }
+
+  async getResources(id: string) {
+    const foundCourse = await this.courseRepo.findOneBy({ id });
+    if (!foundCourse) {
+      throw new Error('Course not found');
+    }
+    return foundCourse.resources;
+  }
+
 
   async enroll(id: string, enrollCourseDto: EnrollCourseDto) {
     const foundCourse = await this.courseRepo.findOneBy({ id });

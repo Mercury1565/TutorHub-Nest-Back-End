@@ -6,7 +6,6 @@ import { ExamModule } from './exam/exam.module';
 import { CourseModule } from './course/course.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Course } from './schemas/course.schema';
-import { Exam } from './schemas/exam.schema';
 import { ExamResult } from './schemas/examResut.schema';
 import { Feedback } from './schemas/feedback.schema';
 import { Message } from './schemas/message.schema';
@@ -18,6 +17,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './users/users.module';
 import { User } from './schemas/user.schema';
 import { TutorModule } from './users/tutor/tutor.module';
+import { Assessment } from './schemas/assessment.schema';
 
 @Module({
   imports: [
@@ -34,7 +34,7 @@ import { TutorModule } from './users/tutor/tutor.module';
         synchronize: true,
         entities: [
           Course,
-          Exam,
+          Assessment,
           ExamResult,
           Feedback,
           Message,
@@ -50,7 +50,7 @@ import { TutorModule } from './users/tutor/tutor.module';
     CourseModule,
     UserModule,
     StudentsModule,
-    TutorModule
+    TutorModule,
   ],
   controllers: [AppController],
   providers: [AppService],

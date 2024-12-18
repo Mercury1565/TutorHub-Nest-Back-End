@@ -1,20 +1,46 @@
-import { IsNumber, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsDateString, IsNotEmpty, IsNumber, IsString, IsUrl, IsUUID } from 'class-validator';
 
-export class ExamDto {
+export class CreateAssessmentDto {
+  @ApiProperty({
+    description: 'The type of the assessment (e.g., quiz, assignment)',
+    example: 'assignment',
+  })
+  @IsNotEmpty()
   @IsString()
-  link: string;
+  type: string;
 
-  @IsString()
-  examTitle: string;
+  @ApiProperty({
+    description: 'The URL of the assessment resource',
+    example: 'https://example.com/assessments/quiz1',
+  })
+  @IsNotEmpty()
+  @IsUrl()
+  url: string;
 
-  @IsString()
-  examDate: Date;
+  @ApiProperty({
+    description: 'The ID of the tutor who created the assessment',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsNotEmpty()
+  @IsUUID()
+  tutorId: string;
 
-  @IsString()
+  @ApiProperty({
+    description: 'The ID of the course to which the assessment belongs',
+    example: '987e6543-e21c-12a3-b456-426614174999',
+  })
+  @IsNotEmpty()
+  @IsUUID()
   courseId: string;
 
+  @ApiProperty({
+    description: 'The title of the assessment',
+    example: 'Algebra Quiz 1',
+  })
+  @IsNotEmpty()
   @IsString()
-  students: string[];
+  title: string;
 }
 
 export class ExamResultDto {
