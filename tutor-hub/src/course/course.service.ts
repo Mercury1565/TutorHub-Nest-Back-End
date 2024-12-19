@@ -79,19 +79,11 @@ export class CourseService {
   }
 
   async filterCourses(filterCourseDto: FilterCourseDto) {
-    const { tutorId, grade, evaluation, durationPerDay, rate, title, subject } =
+    const { grade, durationPerDay, rate, title } =
       filterCourseDto;
 
     const queryBuilder = this.courseRepo.createQueryBuilder('course');
 
-    if (tutorId) {
-      queryBuilder.andWhere('course.tutorId = :tutorId', { tutorId });
-    }
-    if (subject) {
-      queryBuilder.andWhere('course.subject ILIKE :subject', {
-        subject: `%${subject}%`,
-      });
-    }
     if (title) {
       queryBuilder.andWhere('course.title ILIKE :title', {
         title: `%${title}%`,
@@ -100,10 +92,6 @@ export class CourseService {
 
     if (grade) {
       queryBuilder.andWhere('course.grade = :grade', { grade: +grade });
-    }
-
-    if (evaluation !== undefined) {
-      queryBuilder.andWhere('course.evaluation = :evaluation', { evaluation });
     }
 
     if (durationPerDay !== undefined) {
