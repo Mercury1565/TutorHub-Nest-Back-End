@@ -7,13 +7,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
-import { EnrollCourseDto } from './dto/enroll-cours.dto';
 import { FilterCourseDto } from './dto/filter-course.dto';
 import { AddCommentDto } from './dto/add-comment.dto';
 import { ResourceItemDto } from './dto/resource-item.dto';
 import { Course } from 'src/schemas/course.schema';
 import { Comment } from 'src/schemas/comment.schema';
 import { User } from 'src/schemas/user.schema';
+import { EnrollCourseDto } from './dto/enroll-cours.dto';
+import { PendingEnrollment } from 'src/schemas/pendingEnrollment.schema';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class CourseService {
@@ -24,6 +27,8 @@ export class CourseService {
     // private readonly commentRep: Repository<Comment>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(PendingEnrollment)
+    private readonly pendingEnrollmentRepo: Repository<PendingEnrollment>,
   ) {}
 
   async create(createCourseDto: CreateCourseDto) {
@@ -147,39 +152,59 @@ export class CourseService {
     return foundCourse.resources;
   }
 
-
-  async enroll(id: string, enrollCourseDto: EnrollCourseDto) {
-    const foundCourse = await this.courseRepo.findOneBy({ id });
+  async handlePayment(enrollCourseDto: EnrollCourseDto, receiptFile: Express.Multer.File) {  
+    const foundCourse = await this.courseRepo.findOneBy({ id: enrollCourseDto.courseId });
     if (!foundCourse) {
       throw new Error('Course not found');
     }
     if (foundCourse.seatsRemaining === 0) {
       throw new Error('No seats available');
     }
-
+  
     const student = await this.userRepo.findOne({
       where: { id: enrollCourseDto.studentId },
-      relations: ['courses'],
     });
+  
     if (!student) {
-      throw new NotFoundException('User not found');
+      throw new Error('Student not found');
     }
 
-    const isAlreadyEnrolled = foundCourse.students.some(
-      (enrolledStudent) => enrolledStudent.id === student.id,
+    const requestFound = await this.pendingEnrollmentRepo.findOne(
+      {
+        where: {
+          studentId: enrollCourseDto.studentId,
+          courseId: enrollCourseDto.courseId,
+        }
+      }
     );
-    if (isAlreadyEnrolled) {
-      throw new BadRequestException('User already enrolled');
+
+    if (requestFound) {
+      throw new BadRequestException('Enrollment request already made for this course');
+    };
+  
+    // Ensure the uploads directory exists
+    const uploadsDir = path.join(__dirname, '..', '..', 'uploads', 'receipts');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
     }
-
-    foundCourse.students.push(student);
-    foundCourse.seatsRemaining -= 1;
-    await this.courseRepo.save(foundCourse);
-
-    student.courses.push(foundCourse);
-    await this.userRepo.save(student);
-
-    return foundCourse;
+  
+    // Define the path to save the file
+    const receiptFileName = `${enrollCourseDto.studentId}_${enrollCourseDto.courseId}_${Date.now()}_${receiptFile.originalname}`;
+    const receiptFilePath = path.join(uploadsDir, receiptFileName);
+  
+    // Write the file to the specified location
+    fs.writeFileSync(receiptFilePath, receiptFile.buffer);
+  
+    // Create a pending enrollment entry
+    const pendingEnrollment = this.pendingEnrollmentRepo.create({
+      studentId: student.id,
+      courseId: foundCourse.id,
+      receiptFile: receiptFilePath,
+    });
+  
+    await this.pendingEnrollmentRepo.save(pendingEnrollment);
+  
+    return pendingEnrollment;
   }
 
   // async addComment(courseId: string, addCommentDto: AddCommentDto) {

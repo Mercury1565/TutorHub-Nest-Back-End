@@ -8,10 +8,11 @@ import {
   Delete,
   Query,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { CreateCourseDto } from './dto/create-course.dto';
-import { EnrollCourseDto } from './dto/enroll-cours.dto';
 import { FilterCourseDto } from './dto/filter-course.dto';
 import { Course } from 'src/schemas/course.schema';
 import { UpdateCourseDto } from './dto/update-course.dto';
@@ -19,6 +20,8 @@ import { ResourceItemDto } from './dto/resource-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { CurrentUser } from 'src/auth/curret.user.decorator';
+import { EnrollCourseDto } from './dto/enroll-cours.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -66,9 +69,11 @@ export class CourseController {
     return this.courseService.addResource(id, resourceItemDto);
   }
 
-  @Post(':id/enroll')
-  enroll(@Param('id') id: string, @Body() enrollCourseDto: EnrollCourseDto) {
-    return this.courseService.enroll(id, enrollCourseDto);
+  @Post('/handle_payment')
+  @UseInterceptors(FileInterceptor('receiptFile'))
+  handlePayment(@CurrentUser('userId') userId: string, @Body() enrollCourseDto: EnrollCourseDto, @UploadedFile() receiptFile: Express.Multer.File) {
+    enrollCourseDto.studentId = userId
+    return this.courseService.handlePayment(enrollCourseDto, receiptFile);
   }
 
   // @Delete(':id/dropout/:studentId')

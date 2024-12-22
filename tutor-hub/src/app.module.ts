@@ -18,6 +18,7 @@ import { UserModule } from './users/users.module';
 import { User } from './schemas/user.schema';
 import { TutorModule } from './users/tutor/tutor.module';
 import { Assessment } from './schemas/assessment.schema';
+import { PendingEnrollment } from './schemas/pendingEnrollment.schema';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { Assessment } from './schemas/assessment.schema';
           SocialMedia,
           Comment,
           User,
+          PendingEnrollment
         ],
       }),
     }),

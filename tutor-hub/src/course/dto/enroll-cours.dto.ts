@@ -1,11 +1,14 @@
-import { IsNotEmpty, IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class EnrollCourseDto {
-  @IsOptional()
-  @IsString()
-  googleUrl: string;
-
+  @ApiProperty({ description: 'The ID of the student' })
   @IsNotEmpty()
   @IsString()
   studentId: string;
+
+  @ApiProperty({ description: 'The ID of the course' })
+  @IsNotEmpty()
+  @IsString()
+  courseId: string;
 }
