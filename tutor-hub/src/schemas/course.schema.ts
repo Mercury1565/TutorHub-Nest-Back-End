@@ -1,4 +1,3 @@
-// course.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -8,6 +7,7 @@ import {
 } from 'typeorm';
 import { User } from './user.schema';
 import { Assessment } from './assessment.schema';
+import { PaymentMethod } from './payment_method.schema';
 
 @Entity()
 export class Course {
@@ -65,4 +65,9 @@ export class Course {
     cascade: true,
   })
   assessments: Assessment[];
+
+  @OneToMany(() => PaymentMethod, (payment) => payment.course, {
+    cascade: true
+  })
+  paymentMethods: PaymentMethod[];
 }

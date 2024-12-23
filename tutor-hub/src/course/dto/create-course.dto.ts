@@ -6,6 +6,7 @@ import {
   IsBoolean,
   IsOptional,
 } from 'class-validator';
+import { PaymentMethod } from 'src/schemas/payment_method.schema';
 
 export class CreateCourseDto {
   @ApiProperty({ description: 'Title of the course' })
@@ -57,4 +58,8 @@ export class CreateCourseDto {
   @IsOptional()
   @IsString()
   image: string;
+
+  @ApiPropertyOptional({ description: 'payment' })
+  @IsOptional()
+  paymentMethods: PaymentMethod[];
 }

@@ -10,6 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  Res,
 } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { CreateCourseDto } from './dto/create-course.dto';
@@ -22,6 +23,8 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import { CurrentUser } from 'src/auth/curret.user.decorator';
 import { EnrollCourseDto } from './dto/enroll-cours.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Response } from 'express';
+import path from 'path';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -74,6 +77,27 @@ export class CourseController {
   handlePayment(@CurrentUser('userId') userId: string, @Body() enrollCourseDto: EnrollCourseDto, @UploadedFile() receiptFile: Express.Multer.File) {
     enrollCourseDto.studentId = userId
     return this.courseService.handlePayment(enrollCourseDto, receiptFile);
+  }
+
+  @Get('/pending_enrollment_request/:courseId')
+  async getPendingRequests(@Param('courseId') courseId: string) {
+    return await this.courseService.getPendingRequests(courseId);
+  }
+
+  @Get('get_receipt/:courseId/:studentId')
+  async getFile(@Param('courseId') courseId: string, @Param('studentId') studentId: string, @Res() res: Response) {
+    const filePath = await this.courseService.getReceiptFilePath(courseId, studentId);
+    res.sendFile(filePath);
+  };
+
+  @Post('/approve_enrollment_request/:courseId/:studentId')
+  async approveEnrollmentRequest(@Param('courseId') courseId: string, @Param('studentId') studentId: string) {
+    return await this.courseService.approveEnrollmentRequest(courseId, studentId);
+  }
+
+  @Post('/reject_enrollment_request/:courseId/:studentId')
+  async rejectEnrollmentRequest(@Param('courseId') courseId: string, @Param('studentId') studentId: string) {
+    return await this.courseService.rejectEnrollmentRequest(courseId, studentId);
   }
 
   // @Delete(':id/dropout/:studentId')

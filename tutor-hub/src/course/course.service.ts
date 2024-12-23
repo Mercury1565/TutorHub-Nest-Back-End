@@ -42,6 +42,7 @@ export class CourseService {
       durationPerDay,
       seatsRemaining,
       image,
+      paymentMethods
     } = createCourseDto;
     const tutor = await this.userRepo.findOneBy({ id: tutorId });
     if (!tutor) {
@@ -70,6 +71,7 @@ export class CourseService {
       durationPerDay,
       seatsRemaining,
       image,
+      paymentMethods
     });
 
     return await this.courseRepo.save(createdCourse);
@@ -153,10 +155,17 @@ export class CourseService {
   }
 
   async handlePayment(enrollCourseDto: EnrollCourseDto, receiptFile: Express.Multer.File) {  
-    const foundCourse = await this.courseRepo.findOneBy({ id: enrollCourseDto.courseId });
+    const foundCourse = await this.courseRepo.findOne({
+      where: {
+        id: enrollCourseDto.courseId
+      },
+      relations: ['students']
+      });
+
     if (!foundCourse) {
       throw new Error('Course not found');
     }
+
     if (foundCourse.seatsRemaining === 0) {
       throw new Error('No seats available');
     }
@@ -169,10 +178,16 @@ export class CourseService {
       throw new Error('Student not found');
     }
 
+    if (foundCourse.students.some(student => student.id === enrollCourseDto.studentId)) {
+      throw new BadRequestException('Student is already enrolled in this course');
+    };
+
     const requestFound = await this.pendingEnrollmentRepo.findOne(
       {
         where: {
-          studentId: enrollCourseDto.studentId,
+          user: {
+            id: enrollCourseDto.studentId
+          },
           courseId: enrollCourseDto.courseId,
         }
       }
@@ -197,7 +212,9 @@ export class CourseService {
   
     // Create a pending enrollment entry
     const pendingEnrollment = this.pendingEnrollmentRepo.create({
-      studentId: student.id,
+      user: {
+        id: student.id
+      },
       courseId: foundCourse.id,
       receiptFile: receiptFilePath,
     });
@@ -206,6 +223,73 @@ export class CourseService {
   
     return pendingEnrollment;
   }
+
+  async getPendingRequests(courseId: string) {
+    const pendingRequests = await this.pendingEnrollmentRepo.find({
+      where: { courseId },
+      relations: {
+        user: true
+      }
+    });
+
+    if (!pendingRequests.length) {
+      throw new NotFoundException('No pending requests found for this course');
+    }
+
+    return pendingRequests;
+  }
+
+  async getReceiptFilePath(courseId: string, studentId: string) {
+    const pendingEnrollment = await this.pendingEnrollmentRepo.findOne({
+      where: {
+        user: {
+          id: studentId
+        },
+        courseId,
+      }
+    })
+
+    if (!pendingEnrollment) {
+      throw new NotFoundException('pending request not found')
+    }
+
+    return pendingEnrollment.receiptFile;
+  };
+
+  async approveEnrollmentRequest(courseId: string, studentId: string) {
+    const course = await this.courseRepo.findOne({
+      where: {
+        id: courseId
+      },
+      relations: ['students']
+      });
+    const student = await this.userRepo.findOneBy({ id: studentId });
+
+    if (!course) {
+      throw new Error('Course not found');
+    }
+
+    if (!student) {
+      throw new Error('Student not found');
+    }
+
+    course.students.push(student);
+    await this.courseRepo.save(course);
+
+    await this.pendingEnrollmentRepo.delete({
+      user: {
+      id: studentId
+      },
+      courseId,
+    });
+
+    return course;
+  }
+
+  async rejectEnrollmentRequest(courseId: string, studentId: string) {
+  
+  }
+
 
   // async addComment(courseId: string, addCommentDto: AddCommentDto) {
   //   const { studentId, text, rating } = addCommentDto;

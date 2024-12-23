@@ -19,6 +19,7 @@ import { User } from './schemas/user.schema';
 import { TutorModule } from './users/tutor/tutor.module';
 import { Assessment } from './schemas/assessment.schema';
 import { PendingEnrollment } from './schemas/pendingEnrollment.schema';
+import { PaymentMethod } from './schemas/payment_method.schema';
 
 @Module({
   imports: [
@@ -43,7 +44,8 @@ import { PendingEnrollment } from './schemas/pendingEnrollment.schema';
           SocialMedia,
           Comment,
           User,
-          PendingEnrollment
+          PendingEnrollment,
+          PaymentMethod
         ],
       }),
     }),

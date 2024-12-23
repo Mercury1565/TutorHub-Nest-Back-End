@@ -1,7 +1,8 @@
 // user.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToMany, JoinTable, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToMany, JoinTable, ManyToOne, OneToMany } from 'typeorm';
 import { Course } from './course.schema';
 import { SocialMedia } from './socialMedial.schema';
+import { PendingEnrollment } from './pendingEnrollment.schema';
 
 @Entity('users')
 export class User {
@@ -55,4 +56,7 @@ export class User {
 
   @Column('simple-array', { nullable: true })
   skills?: string[];
+
+  @OneToMany(() => PendingEnrollment, (pendingEnrollment) => pendingEnrollment.user)
+  pendingEnrollments?: PendingEnrollment[];
 }
