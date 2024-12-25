@@ -86,10 +86,11 @@ export class CourseService {
   }
 
   async filterCourses(filterCourseDto: FilterCourseDto) {
-    const { grade, durationPerDay, rate, title } =
-      filterCourseDto;
+    const { grade, durationPerDay, rate, title } = filterCourseDto;
 
-    const queryBuilder = this.courseRepo.createQueryBuilder('course');
+    const queryBuilder = this.courseRepo
+      .createQueryBuilder('course')
+      .leftJoinAndSelect('course.paymentMethods', 'paymentMethods');
 
     if (title) {
       queryBuilder.andWhere('course.title ILIKE :title', {
@@ -179,7 +180,7 @@ export class CourseService {
     }
 
     if (foundCourse.students.some(student => student.id === enrollCourseDto.studentId)) {
-      throw new BadRequestException('Student is already enrolled in this course');
+      throw new Error('Student is already enrolled in this course');
     };
 
     const requestFound = await this.pendingEnrollmentRepo.findOne(
