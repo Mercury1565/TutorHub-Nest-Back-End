@@ -35,53 +35,65 @@ export class StudentsService {
   //   return await this.authService.generateToken(logTutor);
   // }
 
-  async findAll() {
-    const studentsFound = await this.userRepo.find();
-    if (!studentsFound.length) {
-      throw new NotFoundException('No students found');
-    }
-    return studentsFound;
-  }
+  // async findAll() {
+  //   const studentsFound = await this.userRepo.find();
+  //   if (!studentsFound.length) {
+  //     throw new NotFoundException('No students found');
+  //   }
+  //   return studentsFound;
+  // }
 
-  async findOne(id: string) {
-    const studentFound = await this.userRepo.findOneBy({ id });
+  // async findOne(id: string) {
+  //   const studentFound = await this.userRepo.findOneBy({ id });
 
-    if (!studentFound) {
-      throw new NotFoundException('User not found');
-    }
+  //   if (!studentFound) {
+  //     throw new NotFoundException('User not found');
+  //   }
 
-    return studentFound;
-  }
+  //   return studentFound;
+  // }
 
-  async update(id: string, updateStudentDto: UpdateStudentDto) {
-    const studentFound = await this.findOne(id);
-    if (!studentFound) {
-      throw new NotFoundException('User not found');
-    }
+  // async update(id: string, updateStudentDto: UpdateStudentDto) {
+  //   const studentFound = await this.findOne(id);
+  //   if (!studentFound) {
+  //     throw new NotFoundException('User not found');
+  //   }
 
-    await this.userRepo.update(id, updateStudentDto);
-    return this.findOne(id);
-  }
+  //   await this.userRepo.update(id, updateStudentDto);
+  //   return this.findOne(id);
+  // }
 
-  async ensureUniqueUsername(username: string): Promise<string> {
-    let uniqueUsername = username;
-    let count = 0;
+  // async ensureUniqueUsername(username: string): Promise<string> {
+  //   let uniqueUsername = username;
+  //   let count = 0;
 
-    while (
-      await this.userRepo.findOne({ where: { userName: uniqueUsername } })
-    ) {
-      count++;
-      uniqueUsername = `${username}${count}`;
-    }
+  //   while (
+  //     await this.userRepo.findOne({ where: { userName: uniqueUsername } })
+  //   ) {
+  //     count++;
+  //     uniqueUsername = `${username}${count}`;
+  //   }
 
-    return uniqueUsername;
-  }
+  //   return uniqueUsername;
+  // }
 
-  async remove(id: string) {
-    const result = await this.userRepo.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`User with ID "${id}" not found`);
-    }
-    return `This action removes a #${id} student`;
+  // async remove(id: string) {
+  //   const result = await this.userRepo.delete(id);
+  //   if (result.affected === 0) {
+  //     throw new NotFoundException(`User with ID "${id}" not found`);
+  //   }
+  //   return `This action removes a #${id} student`;
+  // }
+  
+  async getEnrolledCourses(id: string) {
+    console.log(id);
+    const student = await this.userRepo.findOne({
+      where: {
+        id
+      },
+      relations: ['courses']
+    });
+    
+    return student.courses;
   }
 }
