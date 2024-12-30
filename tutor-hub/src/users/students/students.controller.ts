@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { StudentsService } from './students.service';
-import { UpdateStudentDto } from './dto/update-student.dto';
+// import { UpdateStudentDto } from './dto/update-student.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from 'src/auth/curret.user.decorator';

@@ -10,7 +10,6 @@ import { Course } from 'src/schemas/course.schema';
 
 @Injectable()
 export class ExamService {
-  private calendar;
   constructor(
     @InjectRepository(Assessment)
     private readonly assessmentRepository: Repository<Assessment>,
@@ -52,6 +51,26 @@ export class ExamService {
       where: { 
       type: 'assignment',
       course: { id: courseId },
+      },
+    });
+  }
+
+  async getClasses(courseId: string) {
+    return await this.assessmentRepository.find({
+      where: { 
+      type: 'class',
+      course: { id: courseId },
+      },
+    });
+  };
+
+  async getAllAssessmentsSortedByTime(course_id: string) {
+    return await this.assessmentRepository.find({
+      where: {
+        course: { id: course_id },
+      },
+      order: {
+        dueDate: 'ASC',
       },
     });
   }

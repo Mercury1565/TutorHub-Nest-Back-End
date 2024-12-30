@@ -4,7 +4,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UpdateStudentDto } from './dto/update-student.dto';
+// import { UpdateStudentDto } from './dto/update-student.dto';
 import { User } from 'src/schemas/user.schema';
 
 @Injectable()

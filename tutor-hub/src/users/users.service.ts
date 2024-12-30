@@ -11,7 +11,8 @@ import { AuthDto } from 'src/auth/dtos/auth.dto';
 import { User } from 'src/schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LogInDto } from './dto/login.dto';
-import { UpdateStudentDto } from './students/dto/update-student.dto';
+import { UpdateUserDto } from './dto/update.dto';
+import { SocialMedia } from 'src/schemas/socialMedial.schema';
 
 @Injectable()
 export class UserService {
@@ -95,13 +96,14 @@ export class UserService {
     return userFound;
   }
 
-  async update(id: string, updateStudentDto: UpdateStudentDto) {
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    console.log(updateUserDto);
     const userFound = await this.findOne(id);
     if (!userFound) {
       throw new NotFoundException('User not found');
     }
 
-    await this.userRepo.update(id, updateStudentDto);
+    await this.userRepo.update({id}, updateUserDto);
     return this.findOne(id);
   }
 

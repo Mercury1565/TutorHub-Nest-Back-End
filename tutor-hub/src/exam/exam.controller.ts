@@ -41,9 +41,17 @@ export class ExamController {
   async getExams(@Param('course_id') courseId: string) {
     const exams = await this.examService.getExams(courseId);
     const assignments = await this.examService.getAssignments(courseId);
+    const classes = await this.examService.getClasses(courseId);
 
-    return { "exams": exams, "assignments": assignments}
+    return { "exams": exams, "assignments": assignments, "classes": classes}
   }
+
+  @Get('/all/:course_id')
+  async getAll(@Param('course_id') courseId: string) {
+    return await this.examService.getAllAssessmentsSortedByTime(courseId)
+  }
+
+
 
   // get all exams of a student
   // @Get('/student')

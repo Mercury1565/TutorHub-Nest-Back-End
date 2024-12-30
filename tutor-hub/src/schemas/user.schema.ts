@@ -50,8 +50,14 @@ export class User {
   @Column({ nullable: true })
   shortDescription?: string;
 
-  @ManyToOne(() => SocialMedia, { nullable: true })
-  socialMedia?: SocialMedia;
+  @Column({ type: 'jsonb', nullable: true })
+  socialMedia?: {
+    twitter?: string;
+    linkedin?: string;
+    telegram?: string;
+    facebook?: string;
+    instagram?: string;
+  };
 
   @Column({ nullable: true })
   bio?: string;
