@@ -8,25 +8,33 @@ import { Repository } from 'typeorm';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { FilterCourseDto } from './dto/filter-course.dto';
-import { AddCommentDto } from './dto/add-comment.dto';
 import { ResourceItemDto } from './dto/resource-item.dto';
 import { Course } from 'src/schemas/course.schema';
-import { Comment } from 'src/schemas/comment.schema';
 import { User } from 'src/schemas/user.schema';
 import { EnrollCourseDto } from './dto/enroll-cours.dto';
 import { PendingEnrollment } from 'src/schemas/pendingEnrollment.schema';
 import * as fs from 'fs';
 import * as path from 'path';
+import { AddReviewDto } from './dto/add-comment.dto';
+import { Review } from 'src/schemas/Review.schema';
+import { Message } from 'src/schemas/message.schema';
+import { MessageDto, ReplyDto } from './dto/message.dto';
 
 @Injectable()
 export class CourseService {
   constructor(
     @InjectRepository(Course)
     private readonly courseRepo: Repository<Course>,
-    // @InjectRepository(Comment)
-    // private readonly commentRep: Repository<Comment>,
+
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+
+    @InjectRepository(Review)
+    private readonly reviewRepo: Repository<Review>,
+
+    @InjectRepository(Message)
+    private readonly messageRepo: Repository<Message>,
+
     @InjectRepository(PendingEnrollment)
     private readonly pendingEnrollmentRepo: Repository<PendingEnrollment>,
   ) {}
@@ -122,6 +130,19 @@ export class CourseService {
       throw new Error('Course not found');
     }
     return foundCourse;
+  }
+
+  async getStudents(id: string) {
+    const foundCourse = await this.courseRepo.findOne({
+      where: {
+        id
+      },
+      relations: ['students']
+    });
+    if (!foundCourse) {
+      throw new Error('Course not found');
+    }
+    return foundCourse.students;
   }
 
   async addResource(id: string, resourceItemDto: ResourceItemDto) {
@@ -279,7 +300,7 @@ export class CourseService {
 
     await this.pendingEnrollmentRepo.delete({
       user: {
-      id: studentId
+      id: studentId,
       },
       courseId,
     });
@@ -291,48 +312,170 @@ export class CourseService {
   
   }
 
+  async addReview(review: AddReviewDto) {
+    const { courseId, studentId, text, rating } = review;
 
-  // async addComment(courseId: string, addCommentDto: AddCommentDto) {
-  //   const { studentId, text, rating } = addCommentDto;
-  //   const course = await this.courseRepo.findOneBy({ id: courseId });
-  //   if (!course) {
-  //     throw new Error('Course not found');
-  //   }
-  //   const student = await this.userRepo.findOneBy({ id: studentId });
-  //   if (!student) {
-  //     throw new Error('User not found');
-  //   }
-  //   const studentName = student.firstName + ' ' + student.lastName;
-  //   course.comments = course.comments.filter(
-  //     (comment) => comment.studentId !== studentId,
-  //   );
-  //   const comment = this.commentRep.create({
-  //     studentId,
-  //     studentName,
-  //     text,
-  //     rating,
-  //   });
-  //   course.comments.push(comment);
+    const course = await this.courseRepo.findOne({
+      where: {
+        id: courseId
+      },
+      relations: ['reviews']
+    });
 
-  //   await this.courseRepo.save(course);
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
 
-  //   return comment;
-  // }
+    const student = await this.userRepo.findOneBy({ id: studentId });
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
 
-  // async getComments(courseId: string) {
-  //   const course = await this.courseRepo.findOne(
-  //   {
-  //     where: {
-  //       id: courseId
-  //     },
-  //     relations: ['comments'],
-  //   });
-  //   if (!course) {
-  //     throw new Error('Course not found');
-  //   }
+    const alreadyReviewed = await this.reviewRepo.existsBy({student: {
+      id: studentId
+    }});
+    
+    if (alreadyReviewed) {
+      throw new BadRequestException('Student has already reviewed this course');
+    }
 
-  //   return course.comments;
-  // }
+    course.rate = parseFloat(((course.rate * course.reviews.length + rating) / (course.reviews.length + 1)).toFixed(1));
+
+    const newReview = this.reviewRepo.create({
+      text,
+      rating,
+      student,
+      course,
+    });
+
+    course.reviews.push(newReview);
+    await this.courseRepo.save(course);
+
+    return newReview;
+  };
+
+  async getReviews(courseId: string) {
+    const reviews = await this.reviewRepo.find({
+      where: {
+        course: {
+          id: courseId
+        }
+      },
+      relations: ['student']
+    })
+
+    return reviews;
+  };
+
+  async sendMessage(messageDto: MessageDto) {
+    const { courseId, senderId, message } = messageDto;
+
+    const course = await this.courseRepo.findOne({
+      where: {
+        id: courseId
+      }
+    });
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    const sender = await this.userRepo.findOneBy({ id: senderId });
+    if (!sender) {
+      throw new NotFoundException('Sender not found');
+    }
+
+    const receiver = await this.userRepo.findOneBy({ id: course.tutorId });
+
+    const newMessage = this.messageRepo.create({
+      message,
+      course,
+      sender,
+      receiver,
+    });
+
+    return await this.messageRepo.save(newMessage);
+  };
+
+  async sendReply(replyDto: ReplyDto) {
+    const { parentId, senderId, message } = replyDto;
+
+    const parentMessage = await this.messageRepo.findOne({
+      where: {
+        id: parentId
+      },
+      relations: ['sender']
+    });
+
+    if (!parentMessage) {
+      throw new NotFoundException('Parent message not found');
+    }
+
+    const sender = await this.userRepo.findOneBy({ id: senderId });
+    if (!sender) {
+      throw new NotFoundException('Sender not found');
+    }
+
+    const receiver = await this.userRepo.findOneBy({ id: parentMessage.sender.id });
+
+    const newMessage = this.messageRepo.create({
+      message,
+      parentMessage,
+      sender,
+      receiver,
+    });
+
+    return await this.messageRepo.save(newMessage);
+  }
+
+  async getStudentMessages(courseId: string, studentId: string) {
+    const course = await this.courseRepo.findOne({
+      where: {
+        id: courseId
+      }
+    });
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    const messages = await this.messageRepo.find({
+      where: {
+        course: {
+          id: courseId
+        },
+        sender: {
+          id: studentId
+        }
+      },
+      relations: ['sender', 'receiver', 'replies']
+    });
+
+    return messages;
+  }
+
+  async getMessages(courseId: string) {
+    const course = await this.courseRepo.findOne({
+      where: {
+        id: courseId
+      }
+    });
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    const messages = await this.messageRepo.find({
+      where: {
+        course: {
+          id: courseId
+        }
+      },
+      relations: ['sender', 'receiver', 'replies']
+    });
+
+    return messages;
+  }
 
   update(id: number, updateCourseDto: UpdateCourseDto) {
     return `This action updates a #${id} course`;

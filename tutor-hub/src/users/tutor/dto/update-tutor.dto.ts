@@ -1,8 +1,8 @@
 import { Type } from 'class-transformer';
 import { IsString, IsOptional, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Feedback } from 'src/schemas/feedback.schema';
 import { SocialMedia } from 'src/schemas/socialMedial.schema';
+import { Review } from 'src/schemas/Review.schema';
 
 export class UpdateTutorDto {
   @ApiProperty({ description: 'Phone number of the tutor', required: false })
@@ -31,7 +31,7 @@ export class UpdateTutorDto {
   @IsOptional()
   skills: string[];
 
-  @ApiProperty({ description: 'Feedback for the tutor', required: false, type: [Feedback] })
+  @ApiProperty({ description: 'Feedback for the tutor', required: false, type: [Review] })
   @IsOptional()
-  feedback: Feedback[];
+  feedback: Review[];
 }

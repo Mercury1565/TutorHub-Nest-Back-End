@@ -41,6 +41,14 @@ export class CreateAssessmentDto {
   @IsNotEmpty()
   @IsString()
   title: string;
+
+  @ApiProperty({
+    description: 'The due date of the assessment',
+    example: '2023-12-31T23:59:59Z',
+  })
+  @IsNotEmpty()
+  @IsDateString()
+  dueDate: string;
 }
 
 export class ExamResultDto {

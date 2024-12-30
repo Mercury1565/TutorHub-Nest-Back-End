@@ -1,18 +1,23 @@
 import { IsNotEmpty, IsString, IsNumber, Min, Max } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
-export class AddCommentDto {
+export class AddReviewDto {
+  @ApiProperty({ description: 'ID of the student' })
   @IsNotEmpty()
   @IsString()
-  studentId: string;
+  studentId?: string;
 
+  @ApiProperty({ description: 'ID of the course' })
   @IsNotEmpty()
   @IsString()
-  studentName: string;
+  courseId: string;
 
+  @ApiProperty({ description: 'Text of the Review' })
   @IsNotEmpty()
   @IsString()
   text: string;
 
+  @ApiProperty({ description: 'Rating of the course', minimum: 0, maximum: 5 })
   @IsNotEmpty()
   @IsNumber()
   @Min(0)

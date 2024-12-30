@@ -3,6 +3,8 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 import { Course } from './course.schema';
 import { SocialMedia } from './socialMedial.schema';
 import { PendingEnrollment } from './pendingEnrollment.schema';
+import { Review } from './Review.schema';
+import { Message } from './message.schema';
 
 @Entity('users')
 export class User {
@@ -57,6 +59,15 @@ export class User {
   @Column('simple-array', { nullable: true })
   skills?: string[];
 
-  @OneToMany(() => PendingEnrollment, (pendingEnrollment) => pendingEnrollment.user)
+  @OneToMany(() => PendingEnrollment, (pendingEnrollment: PendingEnrollment) => pendingEnrollment.user)
   pendingEnrollments?: PendingEnrollment[];
+
+  @OneToMany(() => Review, (Review) => Review.student)
+  Reviews?: Review[];
+
+  @OneToMany(() => Message, (message) => message.sender)
+  sentMessages?: Message[];
+
+  @OneToMany(() => Message, (message) => message.receiver)
+  receivedMessages?: Message[];
 }

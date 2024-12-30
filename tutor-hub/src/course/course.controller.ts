@@ -25,6 +25,8 @@ import { EnrollCourseDto } from './dto/enroll-cours.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import path from 'path';
+import { AddReviewDto } from './dto/add-comment.dto';
+import { MessageDto, ReplyDto } from './dto/message.dto';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -57,6 +59,11 @@ export class CourseController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.courseService.findOne(id);
+  }
+
+  @Get('/students/:id')
+  getStudents(@Param('id') id: string) {
+    return this.courseService.getStudents(id);
   }
 
   @Get(':id/resources')
@@ -100,30 +107,38 @@ export class CourseController {
     return await this.courseService.rejectEnrollmentRequest(courseId, studentId);
   }
 
-  // @Delete(':id/dropout/:studentId')
-  // async dropOut(
-  //   @Param('id') id: string,
-  //   @Param('studentId') studentId: string,
-  // ): Promise<Course> {
-  //   return this.courseService.dropOut(id, studentId);
-  // }
+  @Post('/add_Review')
+  async addReview(@CurrentUser('userId') userId: string, @Body() addReviewDto: AddReviewDto) {
+    addReviewDto.studentId = userId;
+    return this.courseService.addReview(addReviewDto);
+  }
 
-  // @Post(':courseId/comment')
-  // @UseGuards(JwtAuthGuard)
-  // async addComment(
-  //   @Request() req,
-  //   @Param('courseId') courseId: string,
-  //   @Body()
-  //   addCommentDto: AddCommentDto,
-  // ) {
-  //   addCommentDto.studentId = req.user.sub;
-  //   return this.courseService.addComment(courseId, addCommentDto);
-  // }
+  @Get('/get_Review/:courseId')
+  async getReview(@Param('courseId') courseId: string) {
+    return this.courseService.getReviews(courseId);
+  }
 
-  // @Get(':courseId/comments')
-  // async getComments(@Param('courseId') courseId: string) {
-  //   return this.courseService.getComments(courseId);
-  // }
+  @Post('/send_message')
+  async sendMessage(@CurrentUser('userId') userId: string, @Body() messageDto: MessageDto) {
+    messageDto.senderId = userId;
+    return this.courseService.sendMessage(messageDto);
+  }
+
+  @Post('/send_reply')
+  async sendReply(@CurrentUser('userId') userId: string, @Body() replyDto: ReplyDto) {
+    replyDto.senderId = userId;
+    return this.courseService.sendReply(replyDto);
+  }
+
+  @Get('/get_messages/:courseId')
+  async getMessages(@Param('courseId') courseId: string) {
+    return this.courseService.getMessages(courseId);
+  }
+
+  @Get('/get_student_messages/:courseId')
+  async getStudentMessages(@CurrentUser('userId') userId: string, @Param('courseId') courseId: string) {
+    return this.courseService.getStudentMessages(courseId, userId);
+  }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateCourseDto: UpdateCourseDto) {

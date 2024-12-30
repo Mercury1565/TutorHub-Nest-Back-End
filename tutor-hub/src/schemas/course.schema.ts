@@ -8,6 +8,8 @@ import {
 import { User } from './user.schema';
 import { Assessment } from './assessment.schema';
 import { PaymentMethod } from './payment_method.schema';
+import { Review } from './Review.schema';
+import { Message } from './message.schema';
 
 @Entity()
 export class Course {
@@ -67,7 +69,17 @@ export class Course {
   assessments: Assessment[];
 
   @OneToMany(() => PaymentMethod, (payment) => payment.course, {
-    cascade: true
+    cascade: true,
   })
   paymentMethods: PaymentMethod[];
+
+  @OneToMany(() => Review, (review) => review.course, {
+    cascade: true,
+  })
+  reviews?: Review[];
+
+  @OneToMany(() => Message, (message) => message.course, {
+    cascade: true,
+  })
+  messages: Message[];
 }

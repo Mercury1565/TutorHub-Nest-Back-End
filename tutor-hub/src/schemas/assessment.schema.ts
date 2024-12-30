@@ -25,5 +25,8 @@ export class Assessment {
   title: string;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', nullable: false })
-  date: Date;
+  createdDate: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  dueDate: Date;
 }
