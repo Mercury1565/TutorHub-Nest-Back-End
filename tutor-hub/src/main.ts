@@ -18,8 +18,7 @@ async function bootstrap() {
   SwaggerModule.setup('docs', app, document);
 
   const corsOptions: CorsOptions = {
-    // origin: 'http://localhost:5173',
-    origin: 'https://tutor-hub-react-front-ge8kxm9sl-hermons-projects-a9b361c1.vercel.app'
+    origin: 'https://tutor-hub-react-front-end.vercel.app/'
   };
   app.enableCors(corsOptions);
   await app.listen(process.env.PORT || 3000);
